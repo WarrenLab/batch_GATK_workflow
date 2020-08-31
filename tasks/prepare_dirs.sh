@@ -465,7 +465,7 @@ for i in $(ls $CWD/$SM/tmp/split_range/$SM*.bed); do
     bedtools sort -faidx $CWD/$SM/tmp/$SM.names.txt -i $i > $CWD/$SM/tmp/split_range/tmp.bed
     mv $CWD/$SM/tmp/split_range/tmp.bed $i
 done
-rm $CWD/$SM/tmp/split_range/tmp.bed
+#rm $CWD/$SM/tmp/split_range/tmp.bed
 
 if [[ -s $CWD/$SM/tmp/split_range/$SM.00001.bed ]]; then
     echo -e "$(date)\nSplit range found" &>> $CWD/$SM/log/prepare_dirs-${SM}.out
