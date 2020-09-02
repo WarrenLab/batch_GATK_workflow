@@ -254,38 +254,38 @@ $TASKDIR/prepare_dirs.sh --sample $SM \
 --runLen $runLen --perform $PERFORM --bqsr $BQSR --taskdir $TASKDIR \
 --rversion $RMOD --bedtools $BEDTOOLSMOD --array-len $ARRAYLEN --gap-size $GAPSIZE
 
-#prepare_readsMEM=$(cat $MACHINE | grep prepare_reads | cut -f 2)
-#prepare_readsTIME=$(cat $MACHINE | grep prepare_reads | cut -f 3)
-#prepare_readsNTASKS=$(cat $MACHINE | grep prepare_reads | cut -f 4)
-## prepare reads
-## this may use some samtools options
-#sbatch \
-#-mem=${prepare_readsMEM}G --time=${prepare_readsTIME} --nodes=1 --ntasks=${prepare_readsNTASKS} \
-#--array=1-$runLen \
-#--job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
-#--mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/prepare_reads-${SM}-%A-%a-%j.out \
-#$TASKDIR/prepare_reads.sh --sample $SM \
-#--read1 $R1 --read2 $R2 --path1 $D1 --path2 $D2 --threads ${prepare_readsNTASKS} \
-#--workdir $CWD --pigz $PIGZMOD \
-#--samtools $SAMTOOLSMOD --perform $PERFORM
-#
-#
-#map_readsMEM=$(cat $MACHINE | grep map_reads | cut -f 2)
-#map_readsTIME=$(cat $MACHINE | grep map_reads | cut -f 3)
-#map_readsNTASKS=$(cat $MACHINE | grep map_reads | cut -f 4)
-## Map reads
-## bwa does not offer mem usage options but scales proportinally with threads
-#sbatch \
-#--mem=${map_readsMEM}G --time=${map_readsTIME} --nodes=1 --ntasks=${map_readsNTASKS} \
-#--array=1-$runLen --job-name=$SM --account=$ACCOUNT \
-#--partition=$PARTITION $EXCLUSIVE -d singleton \
-#--mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/map_reads-${SM}-%A-%a-%j.out \
-#$TASKDIR/map_reads.sh --sample $SM \
-#--read1 $R1 --read2 $R2 --threads ${map_readsNTASKS} \
-#--workdir $CWD --bwa $BWAMOD --samtools $SAMTOOLSMOD --perform $PERFORM \
-#--flowcell $FC --lane $LN --library $LB --platform $PL --ref $REF \
-#
-#
+prepare_readsMEM=$(cat $MACHINE | grep prepare_reads | cut -f 2)
+prepare_readsTIME=$(cat $MACHINE | grep prepare_reads | cut -f 3)
+prepare_readsNTASKS=$(cat $MACHINE | grep prepare_reads | cut -f 4)
+# prepare reads
+# this may use some samtools options
+sbatch \
+--mem=${prepare_readsMEM}G --time=${prepare_readsTIME} --nodes=1 --ntasks=${prepare_readsNTASKS} \
+--array=1-$runLen \
+--job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
+--mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/prepare_reads-${SM}-%A-%a-%j.out \
+$TASKDIR/prepare_reads.sh --sample $SM \
+--read1 $R1 --read2 $R2 --path1 $D1 --path2 $D2 --threads ${prepare_readsNTASKS} \
+--workdir $CWD --pigz $PIGZMOD \
+--samtools $SAMTOOLSMOD --perform $PERFORM
+
+
+map_readsMEM=$(cat $MACHINE | grep map_reads | cut -f 2)
+map_readsTIME=$(cat $MACHINE | grep map_reads | cut -f 3)
+map_readsNTASKS=$(cat $MACHINE | grep map_reads | cut -f 4)
+# Map reads
+# bwa does not offer mem usage options but scales proportinally with threads
+sbatch \
+--mem=${map_readsMEM}G --time=${map_readsTIME} --nodes=1 --ntasks=${map_readsNTASKS} \
+--array=1-$runLen --job-name=$SM --account=$ACCOUNT \
+--partition=$PARTITION $EXCLUSIVE -d singleton \
+--mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/map_reads-${SM}-%A-%a-%j.out \
+$TASKDIR/map_reads.sh --sample $SM \
+--read1 $R1 --read2 $R2 --threads ${map_readsNTASKS} \
+--workdir $CWD --bwa $BWAMOD --samtools $SAMTOOLSMOD --perform $PERFORM \
+--flowcell $FC --lane $LN --library $LB --platform $PL --ref $REF
+
+
 #sort_MEM=$(cat $MACHINE | grep -P "^sort\t" | cut -f 2)
 #sort_TIME=$(cat $MACHINE | grep -P "^sort\t" | cut -f 3)
 #sort_NTASKS=$(cat $MACHINE | grep -P "^sort\t" | cut -f 4)
