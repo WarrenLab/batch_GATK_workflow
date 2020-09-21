@@ -1,4 +1,12 @@
-#!/bin/bash
+#!/usr/bin/bash
+#SBATCH --partition=BioCompute,hpc5,hpc6
+#SBATCH --account=warrenlab
+#SBATCH -J GATK_control_script
+#SBATCH -o GATK_control_script_%j_o.txt
+#SBATCH --time=2-00:00:00 # 2 days, 0 hours, 0 minutes, 0 seconds
+#SBATCH --mem=40G
+#SBATCH --cpus-per-task 1
+
 # set defults for unused options
 BQSR=false
 PERFORM=false
@@ -241,6 +249,7 @@ prepare_dirsTIME=$(cat $MACHINE | grep prepare_dirs | cut -f 3)
 prepare_dirsNTASKS=$(cat $MACHINE | grep prepare_dirs | cut -f 4)
 # prepare dirs
 sbatch \
+--wait \
 --mem=${prepare_dirsMEM}G --time=${prepare_dirsTIME} --nodes=1 --ntasks=${prepare_dirsNTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
 --mail-user=$EMAIL --mail-type=FAIL,BEGIN --output=prepare_dirs-${SM}-%j.out \
@@ -260,6 +269,7 @@ prepare_readsNTASKS=$(cat $MACHINE | grep prepare_reads | cut -f 4)
 # prepare reads
 # this may use some samtools options
 sbatch \
+--wait \
 --mem=${prepare_readsMEM}G --time=${prepare_readsTIME} --nodes=1 --ntasks=${prepare_readsNTASKS} \
 --array=1-$runLen \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
@@ -276,6 +286,7 @@ map_readsNTASKS=$(cat $MACHINE | grep map_reads | cut -f 4)
 # Map reads
 # bwa does not offer mem usage options but scales proportinally with threads
 sbatch \
+--wait \
 --mem=${map_readsMEM}G --time=${map_readsTIME} --nodes=1 --ntasks=${map_readsNTASKS} \
 --array=1-$runLen --job-name=$SM --account=$ACCOUNT \
 --partition=$PARTITION $EXCLUSIVE -d singleton \
@@ -291,6 +302,7 @@ sort_TIME=$(cat $MACHINE | grep -P "^sort\t" | cut -f 3)
 sort_NTASKS=$(cat $MACHINE | grep -P "^sort\t" | cut -f 4)
 # sort
 sbatch \
+--wait \
 --mem=${sort_MEM}G --time=${sort_TIME} --nodes=1 --ntasks=${sort_NTASKS} --array=1-$runLen \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/sort-${SM}-%A-%a-%j.out \
@@ -304,6 +316,7 @@ merge_TIME=$(cat $MACHINE | grep -P "^merge\t" | cut -f 3)
 merge_NTASKS=$(cat $MACHINE | grep -P "^merge\t" | cut -f 4)
 # merge
 sbatch \
+--wait \
 --mem=${merge_MEM}G --time=${merge_TIME} --nodes=1 --ntasks=${merge_NTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/merge-${SM}-%j.out \
@@ -316,6 +329,7 @@ mark_duplicatesTIME=$(cat $MACHINE | grep mark_duplicates | cut -f 3)
 mark_duplicatesNTASKS=$(cat $MACHINE | grep mark_duplicates | cut -f 4)
 # mark_duplicates.sh
 sbatch \
+--wait \
 --mem=${mark_duplicatesMEM}G --time=${mark_duplicatesTIME} --nodes=1 --ntasks=${mark_duplicatesNTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/mark_duplicates-${SM}-%j.out \
@@ -328,6 +342,7 @@ indexTIME=$(cat $MACHINE | grep -P "^index\t" | cut -f 3)
 indexNTASKS=$(cat $MACHINE | grep -P "^index\t" | cut -f 4)
 # index.sh
 IDXJOB=$(sbatch \
+--wait \
 --mem=${indexMEM}G --time=${indexTIME} --nodes=1 --ntasks=${indexNTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/index-${SM}-%j.out \
@@ -342,6 +357,7 @@ unmapped_readsTIME=$(cat $MACHINE | grep unmapped_reads | cut -f 3)
 unmapped_readsNTASKS=$(cat $MACHINE | grep unmapped_reads | cut -f 4)
 # unmapped_reads.sh
 sbatch \
+--wait \
 --mem=${unmapped_readsMEM}G --time=${unmapped_readsTIME} --nodes=1 --ntasks=${unmapped_readsNTASKS} \
 --job-name=${SM}-unmapped --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d afterok:$IDXJOB \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/unmapped_reads-${SM}-%j.out \
@@ -355,6 +371,7 @@ realigner_target_creatorNTASKS=$(cat $MACHINE | grep realigner_target_creator | 
 # realigner_target_creator
 # need to check nt and nct defs to determine how to set max mem usage for java 
 sbatch \
+--wait \
 --mem=${realigner_target_creatorMEM}G --time=${realigner_target_creatorTIME} --nodes=1 \
 --ntasks=${realigner_target_creatorNTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
@@ -369,6 +386,7 @@ indel_realignerTIME=$(cat $MACHINE | grep indel_realigner | cut -f 3)
 indel_realignerNTASKS=$(cat $MACHINE | grep indel_realigner | cut -f 4)
 # needs a job id for cat_sort_index_bams.sh
 CATBAMID=$(sbatch \
+--wait \
 --mem=${indel_realignerMEM}G --time=${indel_realignerTIME} --nodes=1 --ntasks=${indel_realignerNTASKS} \
 --array=1-$ARRAYLEN \
 --job-name=$SM --account=$ACCOUNT --partition=hpc4,hpc5 $EXCLUSIVE -d singleton \
@@ -387,6 +405,7 @@ first_pass_bqsrTIME=$(cat $MACHINE | grep first_pass_bqsr | cut -f 3)
 first_pass_bqsrNTASKS=$(cat $MACHINE | grep first_pass_bqsr | cut -f 4)
 #first_pass_bqsr.s
 BQSRID=$(sbatch \
+--wait \
 --mem=${first_pass_bqsrMEM}G --time=${first_pass_bqsrTIME} --nodes=1 --ntasks=${first_pass_bqsrNTASKS} \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/first_pass_bqsr-${SM}-%j.out \
@@ -403,6 +422,7 @@ print_readsNTASKS=$(cat $MACHINE | grep print_reads | cut -f 4)
 # print_reads.sh
 # needs a job id for cat_sort_index_bams.sh
 CATBAMID=$(sbatch \
+--wait \
 --mem=${print_readsMEM}G --time=${print_readsTIME} --nodes=1 --ntasks=${print_readsNTASKS} \
 --array=1-$ARRAYLEN \
 --job-name=$SM --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE -d singleton \
@@ -418,6 +438,7 @@ second_pass_bqsrTIME=$(cat $MACHINE | grep second_pass_bqsr | cut -f 3)
 second_pass_bqsrNTASKS=$(cat $MACHINE | grep second_pass_bqsr | cut -f 4)
 # second_pass_bqsr.sh
 SECONDBQSRID=$(sbatch \
+--wait \
 --mem=${second_pass_bqsrMEM}G --time=${second_pass_bqsrTIME} --ntasks=${second_pass_bqsrNTASKS} \
 -d afterok:$BQSRID  --nodes=1 \
 --job-name=${SM}-recal-plots --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
@@ -440,6 +461,7 @@ cat_sort_index_bamsNTASKS=$(cat $MACHINE | grep cat_sort_index_bams | cut -f 4)
 # push the output to final destination
 # then get an md5sum
 FINISHBAMID=$(sbatch \
+--wait \
 --mem=${cat_sort_index_bamsMEM}G --time=${cat_sort_index_bamsTIME} --nodes=1 \
 --ntasks=${cat_sort_index_bamsNTASKS} \
 --job-name=${SM}-cat-bams --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
@@ -456,6 +478,7 @@ haplotypecallerTIME=$(cat $MACHINE | grep haplotypecaller | cut -f 3)
 haplotypecallerNTASKS=$(cat $MACHINE | grep haplotypecaller | cut -f 4)
 # haplotype caller
 sbatch \
+--wait \
 --mem=${haplotypecallerMEM}G --time=${haplotypecallerTIME} --ntasks=${haplotypecallerNTASKS} \
 -d singleton --array 1-$ARRAYLEN --nodes=1 \
 --job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
@@ -472,6 +495,7 @@ cat_gvcfNTASKS=$(cat $MACHINE | grep cat_gvcf | cut -f 4)
 # cat gvcfs
 # for samtools tasks we could put more into mem
 VARCALLID=$(sbatch \
+--wait \
 --mem=${cat_gvcfMEM}G --time=${cat_gvcfTIME} --ntasks=${cat_gvcfNTASKS} \
 -d singleton --nodes=1 --job-name=${SM} \
 --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
@@ -490,6 +514,7 @@ cp_filesNTASKS=$(cat $MACHINE | grep cp_files | cut -f 4)
 if [[ $BQSR = true ]]; then
 
 FINALID=$(sbatch \
+--wait \
 --mem=${cp_filesMEM}G --time=${cp_filesTIME} --nodes=1 --ntasks=${cp_filesNTASKS} \
 -d afterok:${VARCALLID}:${SECONDBQSRID}:${FINISHBAMID} --job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/cp_files-${SM}-%j.out \
@@ -499,6 +524,7 @@ $TASKDIR/cp_files.sh --sample $SM \
 else
 
 FINALID=$(sbatch \
+--wait \
 --mem=${cp_filesMEM}G --time=${cp_filesTIME} --nodes=1 --ntasks=${cp_filesNTASKS} \
 -d afterok:${VARCALLID}:${FINISHBAMID} --job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
 --mail-user=$EMAIL --mail-type=FAIL --output=$CWD/$SM/log/cp_files-${SM}-%j.out \
@@ -514,6 +540,7 @@ clean_wdTIME=$(cat $MACHINE | grep clean_wd | cut -f 3)
 clean_wdNTASKS=$(cat $MACHINE | grep clean_wd | cut -f 4)
 #clean the working dir
 sbatch \
+--wait \
 --mem=${clean_wdMEM}G --time=${clean_wdTIME} --nodes=1 --ntasks=${clean_wdNTASKS} \
 -d afterok:${FINALID} \
 --job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
