@@ -63,7 +63,7 @@ my $it = natatime 2, @id;
 while (my ($matched_normal, $tumor) = $it->()) {
     for my $sample ($matched_normal, $tumor) {
         my $sample_config = create_config_file_for($sample);
-        my $command = "bash ../../pre_process_pipeline.sh -c $sample_config -m TASK_allocations.tsv -a warrenlab -p BioCompute -e \$USER\@umsystem.edu -t ../tasks -r $ref_fasta -R /storage/htc/warrenlab/reference_files/BQSR_db/Felis_catus_9.0/190823_domestic/190823_Felis_catus_9.0.db.vcf.gz -C $root_dir -b $bam_dir -g $vcf_dir -M $metrics_dir -l $log_dir -A 10 -G 100";
+        my $command = "sbatch -- ../../pre_process_pipeline.sh -c $sample_config -m TASK_allocations.tsv -a warrenlab -p BioCompute -e \$USER\@umsystem.edu -t ../tasks -r $ref_fasta -R /storage/htc/warrenlab/reference_files/BQSR_db/Felis_catus_9.0/190823_domestic/190823_Felis_catus_9.0.db.vcf.gz -C $root_dir -b $bam_dir -g $vcf_dir -M $metrics_dir -l $log_dir -A 10 -G 100";
         #system("echo '$command'");
         system($command);
     }
