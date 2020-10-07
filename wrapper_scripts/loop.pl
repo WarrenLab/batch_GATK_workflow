@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/cluster/biocompute/software/perl/perl-5.30.3/bin/perl
 use strict;
 use warnings;
 
@@ -10,7 +10,10 @@ use List::MoreUtils qw(natatime);
 
 use File::Slurper 'write_text';
 
-my $out_dir ='/storage/htc/warrenlab/scripts/batch_GATK_workflow/retest/outs';
+# Create job param config file named TASK_allocations.tsv
+create_job_params_config();
+
+my $out_dir ='outs';
 mkdir $out_dir;
 
 my $ref_fasta = '/storage/hpc/group/warrenlab/raw/191203__64864848400199__cat-cancer-exomes/Felis_catus_9.0.fa';
@@ -72,6 +75,7 @@ while (my ($matched_normal, $tumor) = $it->()) {
 
 sub create_config_file_for ($sample_name) {
 
+    # CAUTION: Below contains literal tabs. Be sure to fix them if you edit the text. 
     my $contents = <<"END";
 Sample	Library	Platform	Flowcell	Lane	R1	R2	D1	D2	REF	Recal	CWD	BAM	GVCF	METRICS	LOG
 $sample_name	$sample_name	ILLUMINA	HVWFLDSXX	4	${sample_name}_R1.fq	${sample_name}_R2.fq	/storage/hpc/group/warrenlab/users/alanarodney/exomes/catcancer2/BAM	${sample_name}.sorted.bam	$ref_fasta	/storage/htc/warrenlab/reference_files/BQSR_db/Felis_catus_9.0/v9_vcf/GATK/SRA_99_Lives.chrE3.vcf.gz	$out_dir	$bam_dir	$vcf_dir	$metrics_dir	$log_dir
@@ -79,4 +83,31 @@ END
     my $filename = "$sample_name.config.tsv";
     write_text($filename, $contents);
     return $filename;
+}
+
+sub create_job_params_config {
+    # CAUTION: Below contains literal tabs. Be sure to fix them if you edit the text. 
+    my $contents = <<"END";
+TASK	MEM	TIME	NTASKS
+prepare_dirs	10	1-01:00	1
+prepare_reads	11	1-00:00	20
+map_reads	12	1-01:00	20
+sort	13	1-01:00	5
+merge	13	1-01:00	5
+mark_duplicates	14	1-01:00	2
+index	15	1-01:00	5
+unmapped_reads	16	1-01:00	2
+realigner_target_creator	17	0-01:00	10
+indel_realigner	18	1-01:00	10
+first_pass_bqsr	19	1-01:00	10
+print_reads	20	1-01:00	10
+second_pass_bqsr	21	1-01:00	10
+cat_sort_index_bams	22	1-01:00	5
+haplotypecaller	23	1-01:00	10
+cat_gvcf	24	1-01:00	5
+cp_files	25	1-01:00	5
+clean_wd	26	1-01:00	5
+END
+    write_text('TASK_allocations.tsv',$contents);  
+    return;
 }
