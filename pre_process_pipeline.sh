@@ -20,8 +20,15 @@ PICARD=/cluster/software/picard-tools/picard-tools-2.1.1/picard.jar
 JAVAMOD=java/openjdk/java-1.8.0-openjdk
 PIGZMOD=pigz/pigz-2.4
 BWAMOD=bwa/bwa-0.7.17
-RMOD=R/R-3.3.3
 BEDTOOLSMOD=bedtools/bedtools-2.26.0
+
+# GATK requires at least these four packages to be installed:
+#gplots
+#ggplot2
+#gsalib
+#reshape
+module load biocompute/biocompute-modules
+RMOD=R/R-4.0.1
 
 bold=$(tput bold)
 normal=$(tput sgr0)
