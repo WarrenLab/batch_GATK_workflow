@@ -535,17 +535,18 @@ fi
 
 echo $FINALID
 
-clean_wdMEM=$(cat $MACHINE | grep clean_wd | cut -f 2)
-clean_wdTIME=$(cat $MACHINE | grep clean_wd | cut -f 3)
-clean_wdNTASKS=$(cat $MACHINE | grep clean_wd | cut -f 4)
-#clean the working dir
-sbatch \
---wait \
---mem=${clean_wdMEM}G --time=${clean_wdTIME} --nodes=1 --ntasks=${clean_wdNTASKS} \
--d afterok:${FINALID} \
---job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
---mail-user=$EMAIL --mail-type=FAIL,END --output=clean_wd-${SM}-%j.out \
-$TASKDIR/clean_wd.sh --sample $SM \
---workdir $CWD
+# For now don't delete sample directories so that we can check and make everything processed correctly
+# clean_wdMEM=$(cat $MACHINE | grep clean_wd | cut -f 2)
+# clean_wdTIME=$(cat $MACHINE | grep clean_wd | cut -f 3)
+# clean_wdNTASKS=$(cat $MACHINE | grep clean_wd | cut -f 4)
+# #clean the working dir
+# sbatch \
+# --wait \
+# --mem=${clean_wdMEM}G --time=${clean_wdTIME} --nodes=1 --ntasks=${clean_wdNTASKS} \
+# -d afterok:${FINALID} \
+# --job-name=${SM} --account=$ACCOUNT --partition=$PARTITION $EXCLUSIVE \
+# --mail-user=$EMAIL --mail-type=FAIL,END --output=clean_wd-${SM}-%j.out \
+# $TASKDIR/clean_wd.sh --sample $SM \
+# --workdir $CWD
 
 
